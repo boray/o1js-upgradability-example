@@ -1,11 +1,11 @@
 import { AccountUpdate, Field, Mina, PrivateKey } from 'o1js';
-import { Add } from './Add';
+import { AddMul } from './AddMul';
 let proofsEnabled = false;
-describe('Add', () => {
+describe('AddMul', () => {
     let deployerAccount, deployerKey, senderAccount, senderKey, zkAppAddress, zkAppPrivateKey, zkApp;
     beforeAll(async () => {
         if (proofsEnabled)
-            await Add.compile();
+            await AddMul.compile();
     });
     beforeEach(async () => {
         const Local = await Mina.LocalBlockchain({ proofsEnabled });
@@ -15,7 +15,7 @@ describe('Add', () => {
         senderKey = senderAccount.key;
         zkAppPrivateKey = PrivateKey.random();
         zkAppAddress = zkAppPrivateKey.toPublicKey();
-        zkApp = new Add(zkAppAddress);
+        zkApp = new AddMul(zkAppAddress);
     });
     async function localDeploy() {
         const txn = await Mina.transaction(deployerAccount, async () => {
@@ -26,21 +26,32 @@ describe('Add', () => {
         // this tx needs .sign(), because `deploy()` adds an account update that requires signature authorization
         await txn.sign([deployerKey, zkAppPrivateKey]).send();
     }
-    it('generates and deploys the `Add` smart contract', async () => {
+    it('generates and deploys the `AddMul` smart contract', async () => {
         await localDeploy();
         const num = zkApp.num.get();
         expect(num).toEqual(Field(1));
     });
-    it('correctly updates the num state on the `Add` smart contract', async () => {
+    it('correctly updates the num state by adding two on the `AddMul` smart contract', async () => {
         await localDeploy();
         // update transaction
         const txn = await Mina.transaction(senderAccount, async () => {
-            await zkApp.update();
+            await zkApp.add_and_update();
         });
         await txn.prove();
         await txn.sign([senderKey]).send();
         const updatedNum = zkApp.num.get();
         expect(updatedNum).toEqual(Field(3));
     });
+    it('correctly updates the num state by multiplying with two on the `AddMul` smart contract', async () => {
+        await localDeploy();
+        // update transaction
+        const txn = await Mina.transaction(senderAccount, async () => {
+            await zkApp.multiply_and_update();
+        });
+        await txn.prove();
+        await txn.sign([senderKey]).send();
+        const updatedNum = zkApp.num.get();
+        expect(updatedNum).toEqual(Field(6));
+    });
 });
-//# sourceMappingURL=Add.test.js.map
+//# sourceMappingURL=AddMul.test.js.map

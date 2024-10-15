@@ -1,3 +1,4 @@
 import { Add } from './Add.js';
-export { Add };
+import { AddMul } from './AddMul.js';
+export { Add, AddMul };
 //# sourceMappingURL=index.js.map
